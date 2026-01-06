@@ -120,7 +120,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         picker.sourceType = sourceType
         picker.delegate = context.coordinator
         picker.allowsEditing = false
-        if picker.isCameraDeviceAvailable(.front) {
+        if UIImagePickerController.isCameraDeviceAvailable(.front) {
             picker.cameraDevice = .front
         }
         return picker
