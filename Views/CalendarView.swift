@@ -95,14 +95,12 @@ struct CalendarView: View {
         let thumbnail: UIImage?
 
         private let thumbnailAspectRatio: CGFloat = 4.0 / 5.0 // 固定比率（カレンダー用）
+        private let placeholderColor = Color(.tertiarySystemFill) // 単色プレースホルダー
 
         var body: some View {
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(.secondarySystemBackground))
-
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(.tertiarySystemFill))
+                    .fill(placeholderColor)
                     .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
                     .frame(maxWidth: .infinity, minHeight: 76)
                     .overlay {
@@ -114,6 +112,7 @@ struct CalendarView: View {
                                 .clipped()
                         }
                     }
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("\(dayNumber)")
