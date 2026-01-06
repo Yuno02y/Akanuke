@@ -73,9 +73,10 @@ struct CalendarView: View {
     private var monthGrid: some View {
         let days = generateDays()
 
-        // 👇 モードで列数を変更
-        let columnCount = showWeekdays ? 7 : 3
-        let spacing = showWeekdays ? gridSpacing : 10
+        // モードで切替
+        let isGallery = !showWeekdays
+        let columnCount = isGallery ? 3 : 7
+        let spacing: CGFloat = isGallery ? 10 : gridSpacing
 
         return LazyVGrid(
             columns: Array(
@@ -84,7 +85,7 @@ struct CalendarView: View {
             ),
             spacing: spacing
         ) {
-            // 曜日（表示切替）
+            // 曜日（カレンダーモードのみ）
             if showWeekdays {
                 ForEach(["日","月","火","水","木","金","土"], id: \.self) { weekday in
                     Text(weekday)
@@ -93,12 +94,14 @@ struct CalendarView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
-            
+
+            // セル
             ForEach(days) { day in
                 if let date = day.date {
                     let thumb = loadThumbnail(for: date)
 
                     if let thumb {
+                        // 写真あり → タップ可
                         NavigationLink(destination: DayDetailView(recordDateString: date.yyyyMMdd)) {
                             DayCellView(
                                 dayNumber: day.number,
@@ -108,7 +111,9 @@ struct CalendarView: View {
                             )
                         }
                         .buttonStyle(.plain)
+
                     } else if showWeekdays {
+                        // カレンダーモードのみ：写真なしセル
                         DayCellView(
                             dayNumber: day.number,
                             thumbnail: nil,
@@ -119,11 +124,11 @@ struct CalendarView: View {
                         .allowsHitTesting(false)
                     }
                 } else if showWeekdays {
+                    // 月初の空白（カレンダーモードのみ）
                     Color.clear
                         .aspectRatio(cellRatio, contentMode: .fit)
                 }
             }
-
         }
     }
 
