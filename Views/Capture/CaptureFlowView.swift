@@ -27,7 +27,7 @@ struct CaptureFlowView: View {
                 }
             }
             .sheet(isPresented: $showPicker) {
-                ImagePicker(sourceType: .camera, unmirrorFront: true) { image in
+                ImagePicker(sourceType: .camera) { image in
                     capturedFront = image
                 }
             }
@@ -112,7 +112,6 @@ struct CapturePreview: View {
 
 struct ImagePicker: UIViewControllerRepresentable {
     var sourceType: UIImagePickerController.SourceType = .camera
-    var unmirrorFront: Bool = true
     var completion: (UIImage?) -> Void
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
@@ -129,14 +128,12 @@ struct ImagePicker: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(unmirrorFront: unmirrorFront, completion: completion)
+        Coordinator(completion: completion)
     }
 
     final class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        let unmirrorFront: Bool
         let completion: (UIImage?) -> Void
-        init(unmirrorFront: Bool, completion: @escaping (UIImage?) -> Void) {
-            self.unmirrorFront = unmirrorFront
+        init(completion: @escaping (UIImage?) -> Void) {
             self.completion = completion
         }
 
@@ -147,14 +144,16 @@ struct ImagePicker: UIViewControllerRepresentable {
 
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             let image = info[.originalImage] as? UIImage
-            let processed = image.flatMap { normalize($0, unmirror: picker.cameraDevice == .front && unmirrorFront) }
+            let processed = image.flatMap { processImage($0, device: picker.cameraDevice) }
             completion(processed)
             picker.dismiss(animated: true)
         }
 
-        private func normalize(_ image: UIImage, unmirror: Bool) -> UIImage {
+        private func processImage(_ image: UIImage, device: UIImagePickerController.CameraDevice) -> UIImage {
+            let wasMirrored = image.imageOrientation.isMirrored
             let normalized = normalizeOrientation(image)
-            guard unmirror else { return normalized }
+            let shouldMirror = device == .front && !wasMirrored
+            guard shouldMirror else { return normalized }
             let format = UIGraphicsImageRendererFormat.default()
             format.scale = normalized.scale
             let renderer = UIGraphicsImageRenderer(size: normalized.size, format: format)
@@ -173,6 +172,17 @@ struct ImagePicker: UIViewControllerRepresentable {
             return renderer.image { _ in
                 image.draw(in: CGRect(origin: .zero, size: image.size))
             }
+        }
+    }
+}
+
+private extension UIImage.Orientation {
+    var isMirrored: Bool {
+        switch self {
+        case .upMirrored, .downMirrored, .leftMirrored, .rightMirrored:
+            return true
+        default:
+            return false
         }
     }
 }
