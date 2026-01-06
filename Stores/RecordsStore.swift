@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import Combine
 
 @MainActor
 final class RecordsStore: ObservableObject {
@@ -19,21 +18,13 @@ final class RecordsStore: ObservableObject {
         records[date.yyyyMMdd]
     }
 
-    func progress(for date: Date, captureMode: CaptureMode) -> DayProgress {
-        record(for: date)?.progress(captureMode: captureMode) ?? DayProgress.notStarted
+    func progress(for date: Date) -> DayProgress {
+        record(for: date)?.progress() ?? DayProgress.notStarted
     }
 
     func upsertFront(for date: Date, imagePath: String) {
-        var record = records[date.yyyyMMdd] ?? DayRecord(id: date.yyyyMMdd, frontImagePath: nil, sideImagePath: nil, sideOrientation: nil)
+        var record = records[date.yyyyMMdd] ?? DayRecord(id: date.yyyyMMdd, frontImagePath: nil)
         record.frontImagePath = imagePath
-        records[record.id] = record
-        save()
-    }
-
-    func upsertSide(for date: Date, imagePath: String, orientation: SideOrientation) {
-        var record = records[date.yyyyMMdd] ?? DayRecord(id: date.yyyyMMdd, frontImagePath: nil, sideImagePath: nil, sideOrientation: nil)
-        record.sideImagePath = imagePath
-        record.sideOrientation = orientation
         records[record.id] = record
         save()
     }

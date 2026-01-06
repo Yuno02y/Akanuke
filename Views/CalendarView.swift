@@ -2,7 +2,6 @@ import SwiftUI
 import UIKit
 
 struct CalendarView: View {
-    @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var records: RecordsStore
 
     // ✅ ここに1回だけ置く（structの中）
@@ -171,11 +170,6 @@ struct CalendarView: View {
 
         if let frontPath = record.frontImagePath,
            let image = imageStore.loadImage(at: frontPath) {
-            return image
-        }
-
-        if let sidePath = record.sideImagePath,
-           let image = imageStore.loadImage(at: sidePath) {
             return image
         }
 

@@ -7,7 +7,6 @@ ContentView.swift
 Models/
   RecordModels.swift
 Stores/
-  SettingsStore.swift
   RecordsStore.swift
   ImageStore.swift
 Views/
@@ -30,7 +29,7 @@ Views/
    - `GENERATE_INFOPLIST_FILE = YES`（デフォルトでオン）。プロジェクトで自動生成される Info.plist を使用し、手動で追記してください。
 5. **Info / Permissions（必ず設定してください）**
    - `NSCameraUsageDescription`
-     - 文言例: `毎日の顔写真（前・横）を記録して変化を確認するためにカメラを使用します。`
+     - 文言例: `毎日の顔写真（前）を記録して変化を確認するためにカメラを使用します。`
    - （必要に応じてのみ）`NSPhotoLibraryUsageDescription` と `NSPhotoLibraryAddUsageDescription` を追加。
 
 ## ファイル追加手順
@@ -41,17 +40,15 @@ Views/
 ## データ保存仕様
 - 画像保存先: `Application Support/AkanukeLog/records/YYYY-MM-DD/`。
   - `front.jpg`
-  - `side_right.jpg` または `side_left.jpg`
 - メタデータ: `Application Support/AkanukeLog/records.json`（Codable）。
-- 設定: `UserDefaults` に `captureMode`, `sideOrientation`, `aspectMode` を保存。
+- 設定: 撮影・表示のカスタマイズ項目は廃止し、前面撮影のみ・表示比率はオリジナル固定です。
 
 ## 画面概要
 - Home: 今日の進捗表示、撮影開始、直近記録のサムネ。
-- Capture: 前/横の撮影・プレビュー・保存（UIImagePickerControllerラップ）。
+- Capture: 前のみ撮影・プレビュー・保存（UIImagePickerControllerラップ）。
 - Calendar: 月表示、撮影済み日をマーク、タップで日別詳細。
-- Day Detail: 前/横表示と比較ビュー（任意日付と並べて比較）。
-- Settings: 撮影モード・横向き・表示比率を変更。
+- Day Detail: 前写真の表示と比較ビュー（任意日付と並べて比較）。
+- Settings: 仕様説明と保存先の案内（設定変更項目なし）。
 
 ## 表示比率
-- 保存はオリジナル。
-- 表示のみ `original` / `4:5` を切り替え（クロップは表示時のみ）。
+- 保存/表示ともにオリジナル固定。

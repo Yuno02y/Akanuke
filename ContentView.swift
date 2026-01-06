@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var settings = SettingsStore()
     @StateObject private var records = RecordsStore()
 
     var body: some View {
@@ -28,7 +27,6 @@ struct ContentView: View {
                 Label("設定", systemImage: "gearshape")
             }
         }
-        .environmentObject(settings)
         .environmentObject(records)
     }
 }

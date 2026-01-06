@@ -3,13 +3,10 @@ import UIKit
 
 struct CaptureFlowView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var records: RecordsStore
 
     @State private var showPicker = false
-    @State private var currentAngle: PhotoAngle = .front
     @State private var capturedFront: UIImage?
-    @State private var capturedSide: UIImage?
     @State private var isSaving = false
     private let imageStore = ImageStore()
 
@@ -17,8 +14,8 @@ struct CaptureFlowView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 progressSection
-                captureButtons
-                previews
+                captureButton
+                preview
                 Spacer()
                 saveButton
             }
@@ -31,7 +28,7 @@ struct CaptureFlowView: View {
             }
             .sheet(isPresented: $showPicker) {
                 ImagePicker(sourceType: .camera) { image in
-                    handleCapture(image: image)
+                    capturedFront = image
                 }
             }
         }
@@ -39,42 +36,24 @@ struct CaptureFlowView: View {
 
     private var progressSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("モード: \(settings.captureMode.title) | 横: \(settings.sideOrientation.title)")
-                .font(.subheadline)
-            Label(currentStepDescription, systemImage: "camera.viewfinder")
+            Label("前を撮影してください", systemImage: "camera.viewfinder")
                 .font(.headline)
         }
     }
 
-    private var captureButtons: some View {
-        HStack {
-            if settings.captureMode.requiresFront {
-                Button(action: { beginCapture(angle: .front) }) {
-                    Label("前を撮影", systemImage: "person.crop.square")
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.blue)
-            }
-            if settings.captureMode.requiresSide {
-                Button(action: { beginCapture(angle: .side(settings.sideOrientation)) }) {
-                    Label("横を撮影", systemImage: "person.crop.rectangle")
-                }
-                .buttonStyle(.bordered)
-            }
+    private var captureButton: some View {
+        Button(action: { showPicker = true }) {
+            Label("前を撮影", systemImage: "person.crop.square")
         }
+        .buttonStyle(.borderedProminent)
+        .tint(.blue)
     }
 
-    private var previews: some View {
+    private var preview: some View {
         VStack(spacing: 12) {
-            if let front = capturedFront, settings.captureMode.requiresFront {
-                CapturePreview(title: "前", image: front, aspectMode: settings.aspectMode) {
-                    beginCapture(angle: .front)
-                }
-            }
-            if let side = capturedSide, settings.captureMode.requiresSide {
-                let title = settings.sideOrientation == .right ? "横（右向き）" : "横（左向き）"
-                CapturePreview(title: title, image: side, aspectMode: settings.aspectMode) {
-                    beginCapture(angle: .side(settings.sideOrientation))
+            if let front = capturedFront {
+                CapturePreview(title: "前", image: front) {
+                    showPicker = true
                 }
             }
         }
@@ -91,50 +70,18 @@ struct CaptureFlowView: View {
                     .frame(maxWidth: .infinity)
             }
         }
-        .disabled(!canSave)
+        .disabled(capturedFront == nil)
         .buttonStyle(.borderedProminent)
     }
 
-    private var canSave: Bool {
-        (!settings.captureMode.requiresFront || capturedFront != nil) && (!settings.captureMode.requiresSide || capturedSide != nil)
-    }
-
-    private var currentStepDescription: String {
-        switch currentAngle {
-        case .front: return "前を撮影してください"
-        case .side(let orientation): return orientation == .right ? "横（右向き）を撮影してください" : "横（左向き）を撮影してください"
-        }
-    }
-
-    private func beginCapture(angle: PhotoAngle) {
-        currentAngle = angle
-        showPicker = true
-    }
-
-    private func handleCapture(image: UIImage?) {
-        guard let image else { return }
-        switch currentAngle {
-        case .front:
-            capturedFront = image
-        case .side:
-            capturedSide = image
-        }
-    }
-
     private func save() {
-        guard canSave else { return }
+        guard let front = capturedFront else { return }
         isSaving = true
         Task {
             do {
                 let today = Date()
-                if let front = capturedFront, settings.captureMode.requiresFront {
-                    let url = try imageStore.save(image: front, for: today, angle: .front)
-                    records.upsertFront(for: today, imagePath: url.path)
-                }
-                if let side = capturedSide, settings.captureMode.requiresSide {
-                    let url = try imageStore.save(image: side, for: today, angle: .side(settings.sideOrientation))
-                    records.upsertSide(for: today, imagePath: url.path, orientation: settings.sideOrientation)
-                }
+                let url = try imageStore.saveFront(image: front, for: today)
+                records.upsertFront(for: today, imagePath: url.path)
                 dismiss()
             } catch {
                 print("save error: \(error)")
@@ -147,34 +94,18 @@ struct CaptureFlowView: View {
 struct CapturePreview: View {
     let title: String
     let image: UIImage
-    let aspectMode: AspectMode
     let retake: () -> Void
 
     var body: some View {
         VStack(alignment: .leading) {
             Text(title).bold()
-            imageView
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
                 .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             Button("撮り直し", action: retake)
                 .font(.footnote)
-        }
-    }
-
-    private var imageView: some View {
-        let uiImage = image
-        let base = Image(uiImage: uiImage)
-            .resizable()
-            .scaledToFill()
-        return Group {
-            if aspectMode == .fourByFive {
-                base
-                    .aspectRatio(4.0/5.0, contentMode: .fit)
-                    .clipped()
-            } else {
-                base
-                    .scaledToFit()
-            }
         }
     }
 }

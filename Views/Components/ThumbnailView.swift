@@ -2,10 +2,11 @@ import SwiftUI
 
 struct ThumbnailView: View {
     let image: UIImage
-    let aspectMode: AspectMode
 
     var body: some View {
-        FlexibleImage(image: image, aspectMode: aspectMode)
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFit()
             .frame(width: 64, height: 80)
             .clipped()
             .background(Color(.secondarySystemBackground))

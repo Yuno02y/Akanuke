@@ -2,12 +2,12 @@ import Foundation
 import UIKit
 
 struct ImageStore {
-    func save(image: UIImage, for date: Date, angle: PhotoAngle) throws -> URL {
+    func saveFront(image: UIImage, for date: Date) throws -> URL {
         let base = try baseDirectory()
         let dayDir = base.appendingPathComponent(date.yyyyMMdd, isDirectory: true)
         try FileManager.default.createDirectory(at: dayDir, withIntermediateDirectories: true)
 
-        let fileURL = dayDir.appendingPathComponent("\(angle.fileNameComponent).jpg")
+        let fileURL = dayDir.appendingPathComponent("front.jpg")
         if FileManager.default.fileExists(atPath: fileURL.path) {
             try FileManager.default.removeItem(at: fileURL)
         }

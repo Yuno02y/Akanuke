@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct DayDetailView: View {
-    @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var records: RecordsStore
     let recordDateString: String
     private let imageStore = ImageStore()
@@ -15,11 +14,7 @@ struct DayDetailView: View {
             if let record = records.records[recordDateString] {
                 Section("写真") {
                     if let path = record.frontImagePath, let image = imageStore.loadImage(at: path) {
-                        DetailImageView(title: "前", uiImage: image, aspectMode: settings.aspectMode)
-                    }
-                    if let path = record.sideImagePath, let image = imageStore.loadImage(at: path) {
-                        let title = record.sideOrientation == .left ? "横（左）" : "横（右）"
-                        DetailImageView(title: title, uiImage: image, aspectMode: settings.aspectMode)
+                        DetailImageView(title: "前", uiImage: image)
                     }
                 }
             } else {
@@ -28,7 +23,7 @@ struct DayDetailView: View {
 
             if let baseImage = baseImageForComparison() {
                 Section("比較") {
-                    CompareView(baseDate: recordDateString, baseImage: baseImage, aspectMode: settings.aspectMode)
+                    CompareView(baseDate: recordDateString, baseImage: baseImage)
                 }
             }
         }
@@ -38,7 +33,6 @@ struct DayDetailView: View {
     private func baseImageForComparison() -> UIImage? {
         guard let record = records.records[recordDateString] else { return nil }
         if let frontPath = record.frontImagePath, let image = imageStore.loadImage(at: frontPath) { return image }
-        if let sidePath = record.sideImagePath, let image = imageStore.loadImage(at: sidePath) { return image }
         return nil
     }
 }
@@ -46,12 +40,11 @@ struct DayDetailView: View {
 struct DetailImageView: View {
     let title: String
     let uiImage: UIImage
-    let aspectMode: AspectMode
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).bold()
-            FlexibleImage(image: uiImage, aspectMode: aspectMode)
+            FlexibleImage(image: uiImage)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .padding(.vertical, 4)
@@ -62,7 +55,6 @@ struct CompareView: View {
     @EnvironmentObject var records: RecordsStore
     let baseDate: String
     let baseImage: UIImage
-    let aspectMode: AspectMode
     @State private var compareDate: String?
     private let imageStore = ImageStore()
 
@@ -78,9 +70,9 @@ struct CompareView: View {
             .pickerStyle(.menu)
 
             HStack(alignment: .top) {
-                VStack { Text(baseDate).font(.headline); FlexibleImage(image: baseImage, aspectMode: aspectMode) }
+                VStack { Text(baseDate).font(.headline); FlexibleImage(image: baseImage) }
                 if let compareDate, let compareImage = imageFor(dateString: compareDate) {
-                    VStack { Text(compareDate).font(.headline); FlexibleImage(image: compareImage, aspectMode: aspectMode) }
+                    VStack { Text(compareDate).font(.headline); FlexibleImage(image: compareImage) }
                 }
             }
         }
@@ -89,27 +81,16 @@ struct CompareView: View {
     private func imageFor(dateString: String) -> UIImage? {
         guard let record = records.records[dateString] else { return nil }
         if let path = record.frontImagePath, let image = imageStore.loadImage(at: path) { return image }
-        if let path = record.sideImagePath, let image = imageStore.loadImage(at: path) { return image }
         return nil
     }
 }
 
 struct FlexibleImage: View {
     let image: UIImage
-    let aspectMode: AspectMode
 
     var body: some View {
-        let base = Image(uiImage: image)
+        Image(uiImage: image)
             .resizable()
-            .scaledToFill()
-        return Group {
-            if aspectMode == .fourByFive {
-                base
-                    .aspectRatio(4.0/5.0, contentMode: .fit)
-                    .clipped()
-            } else {
-                base.scaledToFit()
-            }
-        }
+            .scaledToFit()
     }
 }
