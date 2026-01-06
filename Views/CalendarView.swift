@@ -42,7 +42,6 @@ struct CalendarView: View {
                     NavigationLink(destination: DayDetailView(recordDateString: date.yyyyMMdd)) {
                         DayCellView(
                             dayNumber: day.number,
-                            progress: records.record(for: date)?.progress(captureMode: settings.captureMode),
                             thumbnail: loadThumbnail(for: date)
                         )
                     }
@@ -91,7 +90,6 @@ struct CalendarView: View {
 
     struct DayCellView: View {
         let dayNumber: Int
-        let progress: DayProgress?
         let thumbnail: UIImage?
 
         private let thumbnailAspectRatio: CGFloat = 4.0 / 5.0 // 固定比率（カレンダー用）
@@ -102,7 +100,7 @@ struct CalendarView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(placeholderColor)
                     .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
-                    .frame(maxWidth: .infinity, minHeight: 76)
+                    .frame(maxWidth: .infinity)
                     .overlay {
                         if let thumbnail {
                             Image(uiImage: thumbnail)
@@ -126,16 +124,11 @@ struct CalendarView: View {
                         )
                         .padding(.top, 6)
                         .padding(.leading, 6)
-                    if let progress {
-                        Circle()
-                            .fill(progress.color)
-                            .frame(width: 10, height: 10)
-                            .padding(.leading, 8)
-                    }
                     Spacer()
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 78, maxHeight: 96)
+            .frame(maxWidth: .infinity)
+            .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
         }
     }
 
