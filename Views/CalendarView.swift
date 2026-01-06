@@ -4,58 +4,140 @@ import UIKit
 struct CalendarView: View {
     @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var records: RecordsStore
+
+    // ✅ ここに1回だけ置く（structの中）
+    @AppStorage("calendar_show_weekdays") private var showWeekdays: Bool = true
+
     @State private var displayMonth = Date().startOfMonth()
+
     private let calendar = Calendar.current
     private let imageStore = ImageStore()
 
+    private let gridSpacing: CGFloat = 6
+    private let cellRatio: CGFloat = 4.0 / 5.0
+    private let corner: CGFloat = 10
+
     var body: some View {
         NavigationStack {
-            VStack {
-                header
-                monthGrid
-                Spacer()
+            ScrollView {
+                VStack(spacing: 10) {
+                    header
+                    monthGrid
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                .padding(.bottom, 24)
             }
-            .padding()
+            .scrollIndicators(.hidden)
             .navigationTitle("カレンダー")
+            .navigationBarTitleDisplayMode(.large)
         }
     }
 
     private var header: some View {
-        HStack {
-            Button(action: { changeMonth(by: -1) }) { Image(systemName: "chevron.left") }
+        HStack(spacing: 10) {
+            Button(action: { changeMonth(by: -1) }) {
+                Image(systemName: "chevron.left")
+                    .font(.headline)
+            }
+
             Spacer()
+
             Text(displayMonth, formatter: monthFormatter)
                 .font(.headline)
+
             Spacer()
-            Button(action: { changeMonth(by: 1) }) { Image(systemName: "chevron.right") }
+
+            Button(action: { changeMonth(by: 1) }) {
+                Image(systemName: "chevron.right")
+                    .font(.headline)
+            }
+
+            // 右上：曜日表示トグル（アイコンのみ）
+            Button {
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+                    showWeekdays.toggle()
+                }
+            } label: {
+                Image(systemName: showWeekdays ? "calendar" : "square.grid.3x3")
+                    .font(.headline)
+                    .frame(width: 34, height: 34)
+                    .background(Color.white.opacity(0.10), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(showWeekdays ? "曜日を非表示" : "曜日を表示")
         }
+        .padding(.vertical, 4)
     }
 
     private var monthGrid: some View {
         let days = generateDays()
-        return LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-            ForEach(["日","月","火","水","木","金","土"], id: \.self) { weekday in
-                Text(weekday).font(.footnote).foregroundStyle(.secondary)
-            }
-            ForEach(days) { day in
-                if let date = day.date {
-                    NavigationLink(destination: DayDetailView(recordDateString: date.yyyyMMdd)) {
-                        DayCellView(
-                            dayNumber: day.number,
-                            thumbnail: loadThumbnail(for: date)
-                        )
-                    }
-                } else {
-                    Color.clear.frame(height: 44)
+
+        // 👇 モードで列数を変更
+        let columnCount = showWeekdays ? 7 : 3
+        let spacing = showWeekdays ? gridSpacing : 10
+
+        return LazyVGrid(
+            columns: Array(
+                repeating: GridItem(.flexible(), spacing: spacing),
+                count: columnCount
+            ),
+            spacing: spacing
+        ) {
+            // 曜日（表示切替）
+            if showWeekdays {
+                ForEach(["日","月","火","水","木","金","土"], id: \.self) { weekday in
+                    Text(weekday)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary.opacity(0.75))
+                        .frame(maxWidth: .infinity)
                 }
             }
+            
+            ForEach(days) { day in
+                if let date = day.date {
+                    let thumb = loadThumbnail(for: date)
+
+                    if let thumb {
+                        NavigationLink(destination: DayDetailView(recordDateString: date.yyyyMMdd)) {
+                            DayCellView(
+                                dayNumber: day.number,
+                                thumbnail: thumb,
+                                ratio: cellRatio,
+                                corner: corner
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    } else if showWeekdays {
+                        DayCellView(
+                            dayNumber: day.number,
+                            thumbnail: nil,
+                            ratio: cellRatio,
+                            corner: corner
+                        )
+                        .opacity(0.55)
+                        .allowsHitTesting(false)
+                    }
+                } else if showWeekdays {
+                    Color.clear
+                        .aspectRatio(cellRatio, contentMode: .fit)
+                }
+            }
+
         }
     }
+
+    // MARK: - Date generation
 
     private func generateDays() -> [DayCell] {
         let range = calendar.range(of: .day, in: .month, for: displayMonth) ?? 1..<31
         let firstWeekday = calendar.component(.weekday, from: displayMonth)
-        var cells: [DayCell] = Array(repeating: DayCell(number: 0, date: nil), count: firstWeekday - 1)
+
+        var cells: [DayCell] = Array(
+            repeating: DayCell(number: 0, date: nil),
+            count: max(firstWeekday - 1, 0)
+        )
+
         for day in range {
             if let date = calendar.date(byAdding: .day, value: day - 1, to: displayMonth) {
                 cells.append(DayCell(number: day, date: date))
@@ -77,57 +159,57 @@ struct CalendarView: View {
         return df
     }
 
+    // MARK: - Thumbnail
+
     private func loadThumbnail(for date: Date) -> UIImage? {
         guard let record = records.record(for: date) else { return nil }
-        if let frontPath = record.frontImagePath, let image = imageStore.loadImage(at: frontPath) {
+
+        if let frontPath = record.frontImagePath,
+           let image = imageStore.loadImage(at: frontPath) {
             return image
         }
-        if let sidePath = record.sideImagePath, let image = imageStore.loadImage(at: sidePath) {
+
+        if let sidePath = record.sideImagePath,
+           let image = imageStore.loadImage(at: sidePath) {
             return image
         }
+
         return nil
     }
+
+    // MARK: - Views
 
     struct DayCellView: View {
         let dayNumber: Int
         let thumbnail: UIImage?
+        let ratio: CGFloat
+        let corner: CGFloat
 
-        private let thumbnailAspectRatio: CGFloat = 4.0 / 5.0 // 固定比率（カレンダー用）
-        private let placeholderColor = Color(.tertiarySystemFill) // 単色プレースホルダー
+        private let placeholderColor = Color(.tertiarySystemFill)
 
         var body: some View {
             ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: corner)
                     .fill(placeholderColor)
-                    .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
-                    .frame(maxWidth: .infinity)
                     .overlay {
                         if let thumbnail {
                             Image(uiImage: thumbnail)
                                 .resizable()
                                 .scaledToFill()
-                                .aspectRatio(thumbnailAspectRatio, contentMode: .fill)
-                                .clipped()
                         }
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: corner))
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(dayNumber)")
-                        .font(.headline.weight(.semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(Color.black.opacity(0.35))
-                        )
-                        .padding(6)
-                    Spacer()
-                }
+                Text("\(dayNumber)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color.black.opacity(0.55)))
+                    .overlay(Capsule().stroke(Color.white.opacity(0.85), lineWidth: 1))
+                    .padding(4)
             }
-            .frame(maxWidth: .infinity)
-            .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
+            .aspectRatio(ratio, contentMode: .fit)
         }
     }
 
