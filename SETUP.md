@@ -27,9 +27,9 @@ Views/
    - Automatically manage signing を ON。
    - Team に Personal Team を選択。
 4. **Build Settings**
-   - `GENERATE_INFOPLIST_FILE = YES`（デフォルトでオン。Info.plist を手動追加しない）。
-5. **Info**
-   - `NSCameraUsageDescription` を追加。
+   - `GENERATE_INFOPLIST_FILE = YES`（デフォルトでオン）。本リポジトリには `Info.plist` を同梱し、`NSCameraUsageDescription` を定義済みです。
+5. **Info / Permissions**
+   - `NSCameraUsageDescription`（同梱の `Info.plist` に設定済み）
      - 文言: `毎日の顔写真（前・横）を記録して変化を確認するためにカメラを使用します。`
    - （必要に応じてのみ）`NSPhotoLibraryUsageDescription` と `NSPhotoLibraryAddUsageDescription` を追加。
 
