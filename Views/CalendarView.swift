@@ -101,36 +101,30 @@ struct CalendarView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color(.secondarySystemBackground))
 
-                if let thumbnail {
-                    Image(uiImage: thumbnail)
-                        .resizable()
-                        .scaledToFill()
-                        .aspectRatio(thumbnailAspectRatio, contentMode: .fill)
-                        .frame(maxWidth: .infinity, minHeight: 76)
-                        .clipped()
-                        .cornerRadius(8)
-                        .overlay(alignment: .topLeading) {
-                            LinearGradient(
-                                colors: [Color.black.opacity(0.35), Color.clear],
-                                startPoint: .top,
-                                endPoint: .center
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.tertiarySystemFill))
+                    .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
+                    .frame(maxWidth: .infinity, minHeight: 76)
+                    .overlay {
+                        if let thumbnail {
+                            Image(uiImage: thumbnail)
+                                .resizable()
+                                .scaledToFill()
+                                .aspectRatio(thumbnailAspectRatio, contentMode: .fill)
+                                .clipped()
                         }
-                } else {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(.tertiarySystemFill))
-                        .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
-                        .frame(maxWidth: .infinity, minHeight: 76)
-                }
+                    }
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("\(dayNumber)")
                         .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(.ultraThinMaterial, in: Capsule())
+                        .background(
+                            Capsule()
+                                .fill(Color.black.opacity(0.35))
+                        )
                         .padding(.top, 6)
                         .padding(.leading, 6)
                     if let progress {
