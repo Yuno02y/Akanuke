@@ -112,7 +112,7 @@ struct CalendarView: View {
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("\(dayNumber)")
                         .font(.headline.weight(.semibold))
                         .foregroundColor(.white)
@@ -122,8 +122,7 @@ struct CalendarView: View {
                             Capsule()
                                 .fill(Color.black.opacity(0.35))
                         )
-                        .padding(.top, 6)
-                        .padding(.leading, 6)
+                        .padding(6)
                     Spacer()
                 }
             }
