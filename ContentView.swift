@@ -8,14 +8,28 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var settings = SettingsStore()
+    @StateObject private var records = RecordsStore()
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            HomeView()
+                .tabItem {
+                    Label("ホーム", systemImage: "house.fill")
+                }
+            CalendarView()
+                .tabItem {
+                    Label("カレンダー", systemImage: "calendar")
+                }
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem {
+                Label("設定", systemImage: "gearshape")
+            }
         }
-        .padding()
+        .environmentObject(settings)
+        .environmentObject(records)
     }
 }
 
