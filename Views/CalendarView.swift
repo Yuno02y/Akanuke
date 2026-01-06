@@ -43,7 +43,6 @@ struct CalendarView: View {
                         DayCellView(
                             dayNumber: day.number,
                             progress: records.record(for: date)?.progress(captureMode: settings.captureMode),
-                            aspectMode: settings.aspectMode,
                             thumbnail: loadThumbnail(for: date)
                         )
                     }
@@ -93,8 +92,9 @@ struct CalendarView: View {
     struct DayCellView: View {
         let dayNumber: Int
         let progress: DayProgress?
-        let aspectMode: AspectMode
         let thumbnail: UIImage?
+
+        private let thumbnailAspectRatio: CGFloat = 4.0 / 5.0 // 固定比率（カレンダー用）
 
         var body: some View {
             ZStack(alignment: .topLeading) {
@@ -102,29 +102,47 @@ struct CalendarView: View {
                     .fill(Color(.secondarySystemBackground))
 
                 if let thumbnail {
-                    FlexibleImage(image: thumbnail, aspectMode: aspectMode)
-                        .aspectRatio(1, contentMode: .fill)
-                        .frame(maxWidth: .infinity, minHeight: 72)
+                    Image(uiImage: thumbnail)
+                        .resizable()
+                        .scaledToFill()
+                        .aspectRatio(thumbnailAspectRatio, contentMode: .fill)
+                        .frame(maxWidth: .infinity, minHeight: 76)
                         .clipped()
                         .cornerRadius(8)
+                        .overlay(alignment: .topLeading) {
+                            LinearGradient(
+                                colors: [Color.black.opacity(0.35), Color.clear],
+                                startPoint: .top,
+                                endPoint: .center
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                } else {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(.tertiarySystemFill))
+                        .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
+                        .frame(maxWidth: .infinity, minHeight: 76)
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("\(dayNumber)")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.ultraThinMaterial, in: Capsule())
                         .padding(.top, 6)
                         .padding(.leading, 6)
                     if let progress {
                         Circle()
                             .fill(progress.color)
-                            .frame(width: 8, height: 8)
-                            .padding(.leading, 6)
+                            .frame(width: 10, height: 10)
+                            .padding(.leading, 8)
                     }
                     Spacer()
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 76, maxHeight: 90)
+            .frame(maxWidth: .infinity, minHeight: 78, maxHeight: 96)
         }
     }
 
