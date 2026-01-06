@@ -3,6 +3,7 @@ import AVFoundation
 
 /// Controls capture session lifecycle and photo capture.
 final class CameraManager: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
+    @Published var isSessionRunning: Bool = false
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
     private let photoOutput = AVCapturePhotoOutput()
