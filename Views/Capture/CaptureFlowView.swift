@@ -122,6 +122,8 @@ struct ImagePicker: UIViewControllerRepresentable {
         picker.allowsEditing = false
         if UIImagePickerController.isCameraDeviceAvailable(.front) {
             picker.cameraDevice = .front
+            // フロントカメラのライブプレビューも反転しないように補正
+            picker.cameraViewTransform = CGAffineTransform(scaleX: -1, y: 1)
         }
         return picker
     }
