@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 
 struct CalendarView: View {
     @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var records: RecordsStore
     @State private var displayMonth = Date().startOfMonth()
     private let calendar = Calendar.current
+    private let imageStore = ImageStore()
 
     var body: some View {
         NavigationStack {
@@ -38,18 +40,12 @@ struct CalendarView: View {
             ForEach(days) { day in
                 if let date = day.date {
                     NavigationLink(destination: DayDetailView(recordDateString: date.yyyyMMdd)) {
-                        VStack {
-                            Text("\(day.number)")
-                                .frame(maxWidth: .infinity)
-                            if let record = records.record(for: date) {
-                                Circle()
-                                    .fill(record.progress(captureMode: settings.captureMode).color)
-                                    .frame(width: 8, height: 8)
-                            }
-                        }
-                        .padding(4)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color(.secondarySystemBackground)))
+                        DayCellView(
+                            dayNumber: day.number,
+                            progress: records.record(for: date)?.progress(captureMode: settings.captureMode),
+                            aspectMode: settings.aspectMode,
+                            thumbnail: loadThumbnail(for: date)
+                        )
                     }
                 } else {
                     Color.clear.frame(height: 44)
@@ -81,6 +77,55 @@ struct CalendarView: View {
         df.locale = Locale(identifier: "ja_JP")
         df.dateFormat = "yyyy年MM月"
         return df
+    }
+
+    private func loadThumbnail(for date: Date) -> UIImage? {
+        guard let record = records.record(for: date) else { return nil }
+        if let frontPath = record.frontImagePath, let image = imageStore.loadImage(at: frontPath) {
+            return image
+        }
+        if let sidePath = record.sideImagePath, let image = imageStore.loadImage(at: sidePath) {
+            return image
+        }
+        return nil
+    }
+
+    struct DayCellView: View {
+        let dayNumber: Int
+        let progress: DayProgress?
+        let aspectMode: AspectMode
+        let thumbnail: UIImage?
+
+        var body: some View {
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.secondarySystemBackground))
+
+                if let thumbnail {
+                    FlexibleImage(image: thumbnail, aspectMode: aspectMode)
+                        .aspectRatio(1, contentMode: .fill)
+                        .frame(maxWidth: .infinity, minHeight: 72)
+                        .clipped()
+                        .cornerRadius(8)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(dayNumber)")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .padding(.top, 6)
+                        .padding(.leading, 6)
+                    if let progress {
+                        Circle()
+                            .fill(progress.color)
+                            .frame(width: 8, height: 8)
+                            .padding(.leading, 6)
+                    }
+                    Spacer()
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 76, maxHeight: 90)
+        }
     }
 
     struct DayCell: Identifiable {
