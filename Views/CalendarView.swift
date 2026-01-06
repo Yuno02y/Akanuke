@@ -100,7 +100,7 @@ struct CalendarView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(placeholderColor)
                     .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
-                    .frame(maxWidth: .infinity, minHeight: 110)
+                    .frame(maxWidth: .infinity)
                     .overlay {
                         if let thumbnail {
                             Image(uiImage: thumbnail)
@@ -127,7 +127,7 @@ struct CalendarView: View {
                     Spacer()
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 110)
+            .frame(maxWidth: .infinity)
             .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
         }
     }
