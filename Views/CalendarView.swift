@@ -42,7 +42,6 @@ struct CalendarView: View {
                     NavigationLink(destination: DayDetailView(recordDateString: date.yyyyMMdd)) {
                         DayCellView(
                             dayNumber: day.number,
-                            progress: records.record(for: date)?.progress(captureMode: settings.captureMode),
                             thumbnail: loadThumbnail(for: date)
                         )
                     }
@@ -91,7 +90,6 @@ struct CalendarView: View {
 
     struct DayCellView: View {
         let dayNumber: Int
-        let progress: DayProgress?
         let thumbnail: UIImage?
 
         private let thumbnailAspectRatio: CGFloat = 4.0 / 5.0 // 固定比率（カレンダー用）
@@ -114,28 +112,23 @@ struct CalendarView: View {
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack {
                     Text("\(dayNumber)")
-                        .font(.headline.weight(.semibold))
+                        .font(.title3.weight(.semibold))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
                         .background(
                             Capsule()
-                                .fill(Color.black.opacity(0.35))
+                                .fill(Color.black.opacity(0.4))
                         )
-                        .padding(.top, 6)
-                        .padding(.leading, 6)
-                    if let progress {
-                        Circle()
-                            .fill(progress.color)
-                            .frame(width: 10, height: 10)
-                            .padding(.leading, 8)
-                    }
+                        .padding(.top, 8)
                     Spacer()
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity, minHeight: 78, maxHeight: 96)
+            .frame(maxWidth: .infinity)
+            .aspectRatio(thumbnailAspectRatio, contentMode: .fit)
         }
     }
 
