@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import AVFoundation
 
 /// Controls capture session lifecycle and photo capture.
